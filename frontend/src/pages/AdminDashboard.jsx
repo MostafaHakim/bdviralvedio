@@ -9,7 +9,7 @@ const AdminDashboard = () => {
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+  const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -23,7 +23,7 @@ const AdminDashboard = () => {
 
   const fetchVideos = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/videos");
+      const res = await fetch(`${baseURL}/api/videos`);
       const data = await res.json();
       setVideos(data);
       setLoading(false);
@@ -46,7 +46,7 @@ const AdminDashboard = () => {
       formData.append("video", videoFile);
       formData.append("thumbnail", thumbnailFile);
 
-      const uploadRes = await fetch("http://localhost:5000/api/upload", {
+      const uploadRes = await fetch(`${baseURL}/api/upload`, {
         method: "POST",
         headers: {
           "x-auth-token": token,
@@ -58,7 +58,7 @@ const AdminDashboard = () => {
       if (!uploadRes.ok) throw new Error(uploadData.message);
 
       // 2. Save Video Info to MongoDB
-      const videoRes = await fetch("http://localhost:5000/api/videos", {
+      const videoRes = await fetch(`${baseURL}/api/videos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this video?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/videos/${id}`, {
+      const res = await fetch(`${baseURL}/api/videos/${id}`, {
         method: "DELETE",
         headers: { "x-auth-token": token },
       });
@@ -115,8 +115,15 @@ const AdminDashboard = () => {
       <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-red-600">Admin Dashboard</h1>
         <div className="flex space-x-4">
-          <button onClick={() => navigate("/")} className="text-gray-600 hover:text-black">View Site</button>
-          <button onClick={handleLogout} className="text-red-600 font-medium">Logout</button>
+          <button
+            onClick={() => navigate("/")}
+            className="text-gray-600 hover:text-black"
+          >
+            View Site
+          </button>
+          <button onClick={handleLogout} className="text-red-600 font-medium">
+            Logout
+          </button>
         </div>
       </nav>
 
@@ -127,7 +134,9 @@ const AdminDashboard = () => {
             <h2 className="text-xl font-bold mb-6">Upload New Video</h2>
             <form onSubmit={handleAddVideo} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Video Title</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Video Title
+                </label>
                 <input
                   type="text"
                   value={title}
@@ -137,7 +146,9 @@ const AdminDashboard = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Video File</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Video File
+                </label>
                 <input
                   type="file"
                   accept="video/*"
@@ -147,7 +158,9 @@ const AdminDashboard = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Thumbnail Image</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Thumbnail Image
+                </label>
                 <input
                   type="file"
                   accept="image/*"
@@ -157,7 +170,9 @@ const AdminDashboard = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Category</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Category
+                </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -174,9 +189,9 @@ const AdminDashboard = () => {
               <button
                 type="submit"
                 disabled={uploading}
-                className={`w-full font-bold py-3 rounded-lg transition ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                className={`w-full font-bold py-3 rounded-lg transition ${uploading ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"}`}
               >
-                {uploading ? 'Uploading to Cloudinary...' : 'Upload Video'}
+                {uploading ? "Uploading to Cloudinary..." : "Upload Video"}
               </button>
             </form>
           </div>
@@ -190,12 +205,23 @@ const AdminDashboard = () => {
             </div>
             <div className="divide-y divide-gray-100">
               {videos.map((video) => (
-                <div key={video._id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                <div
+                  key={video._id}
+                  className="p-4 flex items-center justify-between hover:bg-gray-50 transition"
+                >
                   <div className="flex items-center space-x-4">
-                    <img src={video.thumbnail} alt="" className="w-24 h-14 object-cover rounded-lg" />
+                    <img
+                      src={video.thumbnail}
+                      alt=""
+                      className="w-24 h-14 object-cover rounded-lg"
+                    />
                     <div>
-                      <h3 className="font-bold text-gray-900 line-clamp-1">{video.title}</h3>
-                      <p className="text-xs text-gray-500">{video.category} • {video.views} views</p>
+                      <h3 className="font-bold text-gray-900 line-clamp-1">
+                        {video.title}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {video.category} • {video.views} views
+                      </p>
                     </div>
                   </div>
                   <button

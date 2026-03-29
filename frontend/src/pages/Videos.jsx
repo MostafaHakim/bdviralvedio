@@ -6,9 +6,9 @@ const Videos = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-
+  const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
   useEffect(() => {
-    fetch("http://localhost:5000/api/videos")
+    fetch(`${baseURL}/api/videos`)
       .then((res) => res.json())
       .then((data) => {
         setVideos(data);

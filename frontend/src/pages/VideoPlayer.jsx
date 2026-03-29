@@ -12,7 +12,7 @@ const VideoPlayer = () => {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-
+  const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
   console.log(video);
@@ -25,7 +25,7 @@ const VideoPlayer = () => {
   const fetchVideoData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/videos/${id}`);
+      const res = await fetch(`${baseURL}/api/videos/${id}`);
       const data = await res.json();
       setVideo(data.video);
       setComments(data.comments);
@@ -42,7 +42,7 @@ const VideoPlayer = () => {
 
   const fetchRelatedVideos = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/videos");
+      const res = await fetch(`${baseURL}/api/videos`);
       const data = await res.json();
       setRelatedVideos(data.filter((v) => v._id !== id));
     } catch (err) {
@@ -56,7 +56,7 @@ const VideoPlayer = () => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/videos/${id}/like`, {
+      const res = await fetch(`${baseURL}/api/videos/${id}/like`, {
         method: "POST",
         headers: { "x-auth-token": token },
       });
@@ -75,17 +75,14 @@ const VideoPlayer = () => {
       return;
     }
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/videos/${id}/comment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-auth-token": token,
-          },
-          body: JSON.stringify({ text: newComment }),
+      const res = await fetch(`${baseURL}/api/videos/${id}/comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": token,
         },
-      );
+        body: JSON.stringify({ text: newComment }),
+      });
       const data = await res.json();
       setComments([data, ...comments]);
       setNewComment("");
