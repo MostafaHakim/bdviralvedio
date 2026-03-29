@@ -46,7 +46,7 @@ const AdminDashboard = () => {
       formData.append("video", videoFile);
       formData.append("thumbnail", thumbnailFile);
 
-      const uploadRes = await fetch(`${baseURL}/api/upload`, {
+      const uploadRes = await fetch(`${baseURL}/api/videos/upload`, {
         method: "POST",
         headers: {
           "x-auth-token": token,
