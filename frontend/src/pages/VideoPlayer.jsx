@@ -27,10 +27,10 @@ const VideoPlayer = () => {
     try {
       const res = await fetch(`${baseURL}/api/videos/${id}`);
       const data = await res.json();
-      setVideo(data.video);
-      setComments(data.comments);
-      setLikeCount(data.video.likes.length);
-      if (user && data.video.likes.includes(user.id)) {
+      setVideo(data?.video);
+      setComments(data?.comments);
+      setLikeCount(data?.video?.likes?.length);
+      if (user && data?.video?.likes?.includes(user.id)) {
         setLiked(true);
       }
     } catch (err) {
@@ -112,12 +112,12 @@ const VideoPlayer = () => {
             {user ? (
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-gray-700 hidden md:inline">
-                  {user.name}
+                  {user?.name}
                 </span>
                 <img
                   src={
-                    user.image ||
-                    "https://ui-avatars.com/api/?name=" + user.name
+                    user?.image ||
+                    "https://ui-avatars.com/api/?name=" + user?.name
                   }
                   className="w-9 h-9 rounded-full object-cover"
                   alt="profile"
@@ -135,30 +135,30 @@ const VideoPlayer = () => {
       <main className="max-w-[1400px] mx-auto p-4 lg:p-6 flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-lg">
-            {video.url.includes("youtube.com") ||
-            video.url.includes("youtu.be") ? (
+            {video?.url.includes("youtube.com") ||
+            video?.url.includes("youtu.be") ? (
               <iframe
                 className="w-full h-full"
                 src={
-                  video.url.includes("embed")
-                    ? video.url
-                    : video.url.replace("watch?v=", "embed/")
+                  video?.url?.includes("embed")
+                    ? video?.url
+                    : video?.url?.replace("watch?v=", "embed/")
                 }
                 title={video.title}
                 allowFullScreen
               />
-            ) : video.url.includes("drive.google.com") ? (
+            ) : video?.url.includes("drive.google.com") ? (
               <iframe
                 className="w-full h-full"
-                src={video.url}
-                title={video.title}
+                src={video?.url}
+                title={video?.title}
                 allow="autoplay"
                 allowFullScreen
               />
             ) : (
               <video
                 className="w-full h-full"
-                src={video.url}
+                src={video?.url}
                 controls
                 autoPlay
               />
@@ -166,20 +166,26 @@ const VideoPlayer = () => {
           </div>
 
           <div className="mt-6">
-            <h1 className="text-2xl font-bold text-gray-900">{video.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{video?.title}</h1>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-b pb-5">
               <div className="flex items-center space-x-4">
                 <img
                   src={
-                    video.user?.image ||
-                    "https://ui-avatars.com/api/?name=" + (video.user?.name || "B")
+                    video?.user?.image ||
+                    "https://ui-avatars.com/api/?name=" +
+                      (video?.user?.name || "B")
                   }
                   className="w-12 h-12 rounded-full object-cover border border-gray-200"
                   alt="owner"
                 />
                 <div>
-                  <p className="font-bold">{video.user?.name || "BDViral Official"}</p>
-                  <p className="text-xs text-gray-500">{video.category || "Trending"} • {new Date(video.createdAt).toLocaleDateString()}</p>
+                  <p className="font-bold">
+                    {video?.user?.name || "BDViral Official"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {video?.category || "Trending"} •{" "}
+                    {new Date(video?.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -199,14 +205,14 @@ const VideoPlayer = () => {
             {/* Comment Section */}
             <div className="mt-8">
               <h3 className="text-xl font-bold mb-6">
-                {comments.length} Comments
+                {comments?.length} Comments
               </h3>
               {user ? (
                 <form onSubmit={handleComment} className="flex space-x-4 mb-8">
                   <img
                     src={
-                      user.image ||
-                      "https://ui-avatars.com/api/?name=" + user.name
+                      user?.image ||
+                      "https://ui-avatars.com/api/?name=" + user?.name
                     }
                     className="w-10 h-10 rounded-full object-cover"
                     alt=""
@@ -242,12 +248,12 @@ const VideoPlayer = () => {
               )}
 
               <div className="space-y-6">
-                {comments.map((comment) => (
+                {comments?.map((comment) => (
                   <div key={comment._id} className="flex space-x-4">
                     <img
                       src={
-                        comment.user.image ||
-                        "https://ui-avatars.com/api/?name=" + comment.user.name
+                        comment.user?.image ||
+                        "https://ui-avatars.com/api/?name=" + comment.user?.name
                       }
                       className="w-10 h-10 rounded-full object-cover"
                       alt=""
@@ -255,7 +261,7 @@ const VideoPlayer = () => {
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-bold">
-                          {comment.user.name}
+                          {comment.user?.name}
                         </span>
                         <span className="text-xs text-gray-500">
                           {new Date(comment.createdAt).toLocaleDateString()}
