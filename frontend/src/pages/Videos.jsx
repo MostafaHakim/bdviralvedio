@@ -104,18 +104,20 @@ const Videos = () => {
           <div className="flex items-center space-x-4">
             {localStorage.getItem("user") ? (
               <div className="flex items-center space-x-3">
-                <span className="text-sm font-medium text-gray-700 hidden md:inline">
-                  {JSON.parse(localStorage.getItem("user")).name}
-                </span>
-                <img
-                  src={
-                    JSON.parse(localStorage.getItem("user")).image ||
-                    "https://ui-avatars.com/api/?name=" +
-                      JSON.parse(localStorage.getItem("user")).name
-                  }
-                  className="w-9 h-9 rounded-full object-cover border border-gray-200"
-                  alt="profile"
-                />
+                <Link to="/profile" className="flex items-center space-x-3 hover:opacity-80 transition">
+                  <span className="text-sm font-medium text-gray-700 hidden md:inline">
+                    {JSON.parse(localStorage.getItem("user")).name}
+                  </span>
+                  <img
+                    src={
+                      JSON.parse(localStorage.getItem("user")).image ||
+                      "https://ui-avatars.com/api/?name=" +
+                        JSON.parse(localStorage.getItem("user")).name
+                    }
+                    className="w-9 h-9 rounded-full object-cover border border-gray-200"
+                    alt="profile"
+                  />
+                </Link>
                 <button
                   onClick={() => {
                     localStorage.clear();

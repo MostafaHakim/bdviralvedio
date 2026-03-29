@@ -3,7 +3,7 @@ const Comment = require('../models/Comment');
 
 exports.getVideos = async (req, res) => {
     try {
-        const videos = await Video.find().sort({ createdAt: -1 });
+        const videos = await Video.find().sort({ createdAt: -1 }).populate('user', 'name image');
         res.json(videos);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -12,7 +12,7 @@ exports.getVideos = async (req, res) => {
 
 exports.getVideoById = async (req, res) => {
     try {
-        const video = await Video.findById(req.params.id);
+        const video = await Video.findById(req.params.id).populate('user', 'name image');
         if (!video) return res.status(404).json({ message: 'Video not found' });
         
         // Increment views
@@ -29,7 +29,7 @@ exports.getVideoById = async (req, res) => {
 exports.createVideo = async (req, res) => {
     try {
         const { title, category, url, thumbnail } = req.body;
-        const newVideo = new Video({ title, category, url, thumbnail });
+        const newVideo = new Video({ title, category, url, thumbnail, user: req.user.id });
         await newVideo.save();
         res.json(newVideo);
     } catch (err) {
@@ -39,6 +39,14 @@ exports.createVideo = async (req, res) => {
 
 exports.deleteVideo = async (req, res) => {
     try {
+        const video = await Video.findById(req.params.id);
+        if (!video) return res.status(404).json({ message: 'Video not found' });
+
+        // Check if user is owner or admin
+        if (video.user.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+
         await Video.findByIdAndDelete(req.params.id);
         res.json({ message: 'Video deleted' });
     } catch (err) {

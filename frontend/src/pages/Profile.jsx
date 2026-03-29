@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-const AdminDashboard = () => {
+const Profile = () => {
   const [videos, setVideos] = useState([]);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Trending");
@@ -12,20 +12,23 @@ const AdminDashboard = () => {
   const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     if (!token) {
-      navigate("/admin/login");
+      navigate("/login");
       return;
     }
-    fetchVideos();
+    fetchMyVideos();
   }, [token, navigate]);
 
-  const fetchVideos = async () => {
+  const fetchMyVideos = async () => {
     try {
       const res = await fetch(`${baseURL}/api/videos`);
       const data = await res.json();
-      setVideos(data);
+      // Filter videos by current user
+      const myVideos = data.filter((v) => v.user === user.id || v.user?._id === user.id);
+      setVideos(myVideos);
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -76,7 +79,7 @@ const AdminDashboard = () => {
         setTitle("");
         setVideoFile(null);
         setThumbnailFile(null);
-        fetchVideos();
+        fetchMyVideos();
         alert("Video uploaded successfully!");
       } else {
         const data = await videoRes.json();
@@ -97,39 +100,53 @@ const AdminDashboard = () => {
         method: "DELETE",
         headers: { "x-auth-token": token },
       });
-      if (res.ok) fetchVideos();
+      if (res.ok) fetchMyVideos();
     } catch (err) {
       alert("Error deleting video");
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
   };
 
   if (loading) return <div className="p-8">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-red-600">Admin Dashboard</h1>
-        <div className="flex space-x-4">
-          <button
-            onClick={() => navigate("/")}
-            className="text-gray-600 hover:text-black"
-          >
-            View Site
-          </button>
-          <button onClick={handleLogout} className="text-red-600 font-medium">
-            Logout
-          </button>
+      <nav className="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+        <Link to="/" className="flex items-center space-x-2 group">
+          <div className="w-8 h-8 bg-gradient-to-br from-red-600 to-red-700 rounded-lg transform rotate-12 group-hover:rotate-0 transition-transform duration-300"></div>
+          <span className="text-red-600 text-2xl font-black tracking-tighter">
+            BDViralClip
+          </span>
+        </Link>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            <span className="text-sm font-medium text-gray-700 hidden md:inline">
+              {user.name}
+            </span>
+            <img
+              src={user.image || "https://ui-avatars.com/api/?name=" + user.name}
+              className="w-9 h-9 rounded-full object-cover border border-gray-200"
+              alt="profile"
+            />
+          </div>
         </div>
       </nav>
 
       <div className="max-w-7xl mx-auto p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Upload Video Form */}
-        <div className="lg:col-span-1">
+        {/* User Info & Upload Form */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+             <div className="text-center mb-6">
+                <img
+                  src={user.image || "https://ui-avatars.com/api/?name=" + user.name}
+                  className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-red-50"
+                  alt="profile"
+                />
+                <h2 className="text-xl font-bold mt-4">{user.name}</h2>
+                <p className="text-gray-500 text-sm">{user.email}</p>
+                <p className="text-xs text-red-600 font-bold mt-1 uppercase tracking-wider">{user.role}</p>
+             </div>
+          </div>
+
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-xl font-bold mb-6">Upload New Video</h2>
             <form onSubmit={handleAddVideo} className="space-y-4">
@@ -191,47 +208,60 @@ const AdminDashboard = () => {
                 disabled={uploading}
                 className={`w-full font-bold py-3 rounded-lg transition ${uploading ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"}`}
               >
-                {uploading ? "Uploading to Cloudinary..." : "Upload Video"}
+                {uploading ? "Uploading..." : "Upload Video"}
               </button>
             </form>
           </div>
         </div>
 
-        {/* Video List */}
+        {/* My Videos List */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-xl font-bold">Manage Videos</h2>
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold">My Videos</h2>
+              <span className="bg-gray-100 px-3 py-1 rounded-full text-xs font-bold text-gray-600">{videos.length} Videos</span>
             </div>
             <div className="divide-y divide-gray-100">
-              {videos.map((video) => (
-                <div
-                  key={video._id}
-                  className="p-4 flex items-center justify-between hover:bg-gray-50 transition"
-                >
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={video.thumbnail}
-                      alt=""
-                      className="w-24 h-14 object-cover rounded-lg"
-                    />
-                    <div>
-                      <h3 className="font-bold text-gray-900 line-clamp-1">
-                        {video.title}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        {video.category} • {video.views} views • By {video.user?.name || "Admin"}
-                      </p>
+              {videos.length > 0 ? (
+                videos.map((video) => (
+                  <div
+                    key={video._id}
+                    className="p-4 flex items-center justify-between hover:bg-gray-50 transition"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={video.thumbnail}
+                        alt=""
+                        className="w-24 h-14 object-cover rounded-lg"
+                      />
+                      <div>
+                        <h3 className="font-bold text-gray-900 line-clamp-1">
+                          {video.title}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {video.category} • {video.views} views • {new Date(video.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                         <Link to={`/video/${video._id}`} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition">
+                            👁️
+                         </Link>
+                        <button
+                        onClick={() => handleDelete(video._id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                        >
+                        🗑️
+                        </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(video._id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                  >
-                    🗑️
-                  </button>
+                ))
+              ) : (
+                <div className="p-12 text-center text-gray-500">
+                   <p className="mb-2 text-4xl">🎬</p>
+                   <p>You haven't uploaded any videos yet.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -240,4 +270,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default Profile;

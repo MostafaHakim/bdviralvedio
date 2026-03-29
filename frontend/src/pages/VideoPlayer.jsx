@@ -169,12 +169,17 @@ const VideoPlayer = () => {
             <h1 className="text-2xl font-bold text-gray-900">{video.title}</h1>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-b pb-5">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center text-white font-bold">
-                  B
-                </div>
+                <img
+                  src={
+                    video.user?.image ||
+                    "https://ui-avatars.com/api/?name=" + (video.user?.name || "B")
+                  }
+                  className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                  alt="owner"
+                />
                 <div>
-                  <p className="font-bold">BDViral Official</p>
-                  <p className="text-xs text-gray-500">1.2M subscribers</p>
+                  <p className="font-bold">{video.user?.name || "BDViral Official"}</p>
+                  <p className="text-xs text-gray-500">{video.category || "Trending"} • {new Date(video.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
