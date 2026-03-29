@@ -142,7 +142,9 @@ const VideoPlayer = () => {
                 src={
                   video?.url?.includes("embed")
                     ? video?.url
-                    : video?.url?.replace("watch?v=", "embed/")
+                    : video?.url?.includes("shorts/")
+                      ? video?.url?.replace("shorts/", "embed/")
+                      : video?.url?.replace("watch?v=", "embed/")
                 }
                 title={video.title}
                 allowFullScreen
@@ -150,7 +152,7 @@ const VideoPlayer = () => {
             ) : video?.url.includes("drive.google.com") ? (
               <iframe
                 className="w-full h-full"
-                src={video?.url}
+                src={video?.url?.replace("/view", "/preview")?.replace("?usp=sharing", "")?.replace("?usp=drive_link", "")}
                 title={video?.title}
                 allow="autoplay"
                 allowFullScreen

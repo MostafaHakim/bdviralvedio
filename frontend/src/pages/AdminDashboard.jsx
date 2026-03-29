@@ -7,6 +7,9 @@ const AdminDashboard = () => {
   const [category, setCategory] = useState("Trending");
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [uploadMethod, setUploadMethod] = useState("file"); // "file" or "url"
+  const [videoUrl, setVideoUrl] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const baseURL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
@@ -34,29 +37,52 @@ const AdminDashboard = () => {
 
   const handleAddVideo = async (e) => {
     e.preventDefault();
-    if (!videoFile || !thumbnailFile) {
-      alert("Please select both video and thumbnail files");
-      return;
+    
+    let finalVideoUrl = "";
+    let finalThumbnailUrl = "";
+
+    if (uploadMethod === "file") {
+      if (!videoFile || !thumbnailFile) {
+        alert("Please select both video and thumbnail files");
+        return;
+      }
+
+      setUploading(true);
+      try {
+        // 1. Upload to Cloudinary via Backend
+        const formData = new FormData();
+        formData.append("video", videoFile);
+        formData.append("thumbnail", thumbnailFile);
+
+        const uploadRes = await fetch(`${baseURL}/api/videos/upload`, {
+          method: "POST",
+          headers: {
+            "x-auth-token": token,
+          },
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(uploadData.message);
+        
+        finalVideoUrl = uploadData.videoUrl;
+        finalThumbnailUrl = uploadData.thumbnailUrl;
+      } catch (err) {
+        console.error(err);
+        alert("Upload failed: " + err.message);
+        setUploading(false);
+        return;
+      }
+    } else {
+      if (!videoUrl || !thumbnailUrl) {
+        alert("Please provide both video and thumbnail URLs");
+        return;
+      }
+      finalVideoUrl = videoUrl;
+      finalThumbnailUrl = thumbnailUrl;
     }
 
-    setUploading(true);
     try {
-      // 1. Upload to Cloudinary via Backend
-      const formData = new FormData();
-      formData.append("video", videoFile);
-      formData.append("thumbnail", thumbnailFile);
-
-      const uploadRes = await fetch(`${baseURL}/api/videos/upload`, {
-        method: "POST",
-        headers: {
-          "x-auth-token": token,
-        },
-        body: formData,
-      });
-
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.message);
-
       // 2. Save Video Info to MongoDB
       const videoRes = await fetch(`${baseURL}/api/videos`, {
         method: "POST",
@@ -67,8 +93,8 @@ const AdminDashboard = () => {
         body: JSON.stringify({
           title,
           category,
-          url: uploadData.videoUrl,
-          thumbnail: uploadData.thumbnailUrl,
+          url: finalVideoUrl,
+          thumbnail: finalThumbnailUrl,
         }),
       });
 
@@ -76,15 +102,17 @@ const AdminDashboard = () => {
         setTitle("");
         setVideoFile(null);
         setThumbnailFile(null);
+        setVideoUrl("");
+        setThumbnailUrl("");
         fetchVideos();
-        alert("Video uploaded successfully!");
+        alert("Video added successfully!");
       } else {
         const data = await videoRes.json();
         alert(data.message || "Failed to save video info");
       }
     } catch (err) {
       console.error(err);
-      alert("Upload failed: " + err.message);
+      alert("Error saving video");
     } finally {
       setUploading(false);
     }
@@ -132,6 +160,22 @@ const AdminDashboard = () => {
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-xl font-bold mb-6">Upload New Video</h2>
+            
+            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+              <button
+                onClick={() => setUploadMethod("file")}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${uploadMethod === "file" ? "bg-white text-red-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                File Upload
+              </button>
+              <button
+                onClick={() => setUploadMethod("url")}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${uploadMethod === "url" ? "bg-white text-red-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+              >
+                External URL
+              </button>
+            </div>
+
             <form onSubmit={handleAddVideo} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -145,30 +189,64 @@ const AdminDashboard = () => {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Video File
-                </label>
-                <input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files[0])}
-                  className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Thumbnail Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setThumbnailFile(e.target.files[0])}
-                  className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
-                  required
-                />
-              </div>
+
+              {uploadMethod === "file" ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Video File
+                    </label>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => setVideoFile(e.target.files[0])}
+                      className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Thumbnail Image
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setThumbnailFile(e.target.files[0])}
+                      className="mt-1 w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+                      required
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Video URL (YouTube or Google Drive)
+                    </label>
+                    <input
+                      type="url"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="mt-1 w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Thumbnail URL
+                    </label>
+                    <input
+                      type="url"
+                      value={thumbnailUrl}
+                      onChange={(e) => setThumbnailUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="mt-1 w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                      required
+                    />
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Category
@@ -191,7 +269,7 @@ const AdminDashboard = () => {
                 disabled={uploading}
                 className={`w-full font-bold py-3 rounded-lg transition ${uploading ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white"}`}
               >
-                {uploading ? "Uploading to Cloudinary..." : "Upload Video"}
+                {uploading ? "Processing..." : uploadMethod === "file" ? "Upload Video" : "Add Video"}
               </button>
             </form>
           </div>
